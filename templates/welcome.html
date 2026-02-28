@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Socio Metrics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body { 
+            background: var(--bg); 
+            color: var(--fg); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow-x: hidden;
+        }
+        .welcome-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+        }
+        .welcome-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1200px;
+            gap: 60px;
+        }
+        .logo-section {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .logo-large {
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+        .logo-large:hover {
+            transform: translateY(-5px);
+        }
+        .logo-large img {
+            width: 200px;
+            height: 200px;
+            object-fit: contain;
+            background: transparent;
+        }
+        .welcome-section {
+            flex: 1;
+            text-align: left;
+        }
+        .welcome-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: var(--ig-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+        .welcome-subtitle {
+            font-size: 1.3rem;
+            color: var(--muted);
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        .welcome-description {
+            font-size: 1.1rem;
+            color: var(--fg);
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .scroll-indicator:hover {
+            transform: translateX(-50%) translateY(-5px);
+        }
+        .scroll-text {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .scroll-arrow {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--ig-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: bounce 2s infinite;
+        }
+        .scroll-arrow svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+        .theme-toggle-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        @media (max-width: 768px) {
+            .welcome-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 40px;
+            }
+            .welcome-section {
+                text-align: center;
+            }
+            .welcome-title {
+                font-size: 2.5rem;
+            }
+            .welcome-subtitle {
+                font-size: 1.1rem;
+            }
+            .logo-large {
+                width: 150px;
+                height: 150px;
+            }
+            .logo-large img {
+                width: 150px;
+                height: 150px;
+                object-fit: contain;
+                background: transparent;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle -->
+    <div class="theme-toggle-container">
+        <span class="theme-toggle" id="themeToggle">
+            <span class="dot"></span>
+            <span>Theme</span>
+        </span>
+    </div>
+    
+    <div class="welcome-container">
+        <div class="welcome-content">
+            <!-- Logo Section -->
+            <div class="logo-section">
+                <div class="logo-large">
+                    <img src="{{ url_for('static', filename='logo1.jpg') }}" alt="Socio Metrics Logo">
+                </div>
+            </div>
+            
+            <!-- Welcome Message Section -->
+            <div class="welcome-section">
+                <h1 class="welcome-title">Welcome to Socio Metrics</h1>
+                <h2 class="welcome-subtitle">The Ultimate Platform for Brands & Creators</h2>
+                <p class="welcome-description">
+                    <strong>For Brands:</strong> Discover and analyze influencers that perfectly align with your brand. 
+                    Find the right creators, track their performance, and make data-driven decisions for your 
+                    influencer marketing campaigns.<br><br>
+                    <strong>For Creators:</strong> Understand your community better with detailed analytics. 
+                    Track your growth, analyze your audience, and optimize your content strategy to build 
+                    stronger connections with your followers.
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="{{ url_for('home') }}" class="btn btn-ig">Get Started</a>
+                    <a href="{{ url_for('brand') }}" class="btn btn-ghost">For Brands</a>
+                    <a href="{{ url_for('creator') }}" class="btn btn-ghost">For Creators</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scroll Indicator -->
+        <div class="scroll-indicator" id="scrollIndicator">
+            <span class="scroll-text">Explore Platform</span>
+            <div class="scroll-arrow">
+                <svg viewBox="0 0 24 24">
+                    <path d="M7 10l5 5 5-5z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Theme toggle functionality
+        const rootEl = document.documentElement;
+        if (localStorage.getItem('theme') === 'dark') {
+            rootEl.setAttribute('data-theme', 'dark');
+        }
+        
+        // Theme toggle event listener
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const isDark = rootEl.getAttribute('data-theme') === 'dark';
+            if (isDark) {
+                rootEl.removeAttribute('data-theme');
+                localStorage.removeItem('theme');
+            } else {
+                rootEl.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+        
+        // Smooth scroll effect for the scroll indicator
+        document.getElementById('scrollIndicator').addEventListener('click', function(e) {
+            e.preventDefault();
+            // Add a smooth transition effect
+            this.style.transform = 'translateX(-50%) scale(0.95)';
+            setTimeout(() => {
+                window.location.href = '{{ url_for("home") }}';
+            }, 150);
+        });
+        
+        // Add some interactive effects
+        document.querySelector('.logo-large').addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px) scale(1.05)';
+        });
+        
+        document.querySelector('.logo-large').addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    </script>
+</body>
+</html>

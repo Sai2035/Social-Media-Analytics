@@ -1,0 +1,156 @@
+/* Scattered Instagram-themed background */
+body{position:relative}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.25;
+  /* Use emoji SVG icons without white backgrounds, 2 of each scattered */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ctext x='12' y='18' text-anchor='middle' font-size='20'%3E❤️%3C/text%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ctext x='12' y='18' text-anchor='middle' font-size='20'%3E❤️%3C/text%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ctext x='12' y='18' text-anchor='middle' font-size='20'%3E💬%3C/text%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ctext x='12' y='18' text-anchor='middle' font-size='20'%3E💬%3C/text%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ctext x='12' y='18' text-anchor='middle' font-size='20'%3E📤%3C/text%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ctext x='12' y='18' text-anchor='middle' font-size='20'%3E📤%3C/text%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ctext x='12' y='18' text-anchor='middle' font-size='20'%3E💾%3C/text%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ctext x='12' y='18' text-anchor='middle' font-size='20'%3E💾%3C/text%3E%3C/svg%3E");
+  background-size:
+    24px 24px,
+    24px 24px,
+    24px 24px,
+    24px 24px,
+    24px 24px,
+    24px 24px,
+    24px 24px,
+    24px 24px;
+  background-repeat: no-repeat;
+  background-position:
+    10% 15%,
+    90% 25%,
+    20% 70%,
+    80% 10%,
+    30% 40%,
+    70% 80%,
+    5% 85%,
+    95% 60%;
+}
+
+/* Ensure main UI stays above background */
+.navbar-ig,.card-ig,.form-section,.table-ig{position:relative;z-index:1}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){ body::before{animation:none} }
+
+/* Variables */
+:root{
+  --ig-orange:#F58529;
+  --ig-pink:#DD2A7B;
+  --ig-purple:#8134AF;
+  --ig-blue:#515BD4;
+  --ig-gradient: linear-gradient(135deg,var(--ig-orange),var(--ig-pink) 40%,var(--ig-purple) 70%,var(--ig-blue));
+  --bg:#ffffff; --fg:#111111; --muted:#555; --border:#e6e6e6; --card:#ffffff;
+}
+
+/* Dark mode */
+:root[data-theme="dark"]{ --bg:#0f0f10; --fg:#f1f1f1; --muted:#c7c7c7; --border:#2a2a2a; --card:#161618; }
+
+:root body{ background:var(--bg); color:var(--fg); }
+:root .navbar-ig{ background:var(--card); border-bottom:1px solid var(--border); }
+:root .card-ig{ background:var(--card); border-color:var(--border); }
+:root .btn-ghost{ background:var(--card); border-color:var(--border); color:var(--fg); }
+:root .link-ig{ color:var(--fg); }
+
+/* Optional: Instagram Sans */
+@font-face{ font-family:'Instagram Sans'; src:url('/static/fonts/InstagramSans.woff2') format('woff2'); font-weight:100 900; font-display:swap; }
+
+/* Base */
+body{font-family:'Instagram Sans','Poppins',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.navbar-ig{border-bottom:1px solid var(--border)}
+.brand-badge{display:flex;align-items:center;gap:10px;font-weight:700}
+.brand-badge .logo-sq{width:34px;height:34px;border-radius:10px;background:var(--ig-gradient);display:inline-flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.12)}
+.brand-badge .app-name{font-weight:800;letter-spacing:.2px}
+
+.btn-ig{
+  /* Gradient outline only */
+  border:2px solid transparent; color:var(--fg);
+  background:
+    linear-gradient(var(--card), var(--card)) padding-box,
+    var(--ig-gradient) border-box;
+  transition:transform .15s ease, box-shadow .2s ease, background-color .2s ease;
+}
+.btn-ig:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(0,0,0,.14)}
+.btn-ghost{background:var(--card);border:1px solid var(--border);color:var(--fg)}
+.btn-ghost:hover{background:#fafafa10}
+
+.card-ig{border:1px solid var(--border);border-radius:16px;background:var(--card);transition:transform .2s ease, box-shadow .2s ease}
+.card-ig:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.08)}
+
+.link-ig{text-decoration:none;font-weight:600}
+.link-ig:hover{color:var(--muted)}
+
+.modal-ig .modal-content{border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--fg)}
+.modal-ig .modal-header{border-bottom:1px solid var(--border)}
+.modal-ig .modal-title{font-weight:700}
+.form-control{background:var(--bg);color:var(--fg);border:1px solid var(--border)}
+.form-control:focus{border-color:#fd1d1d;box-shadow:0 0 0 .2rem rgba(221,42,123,.15)}
+
+.hero-title{font-weight:800}
+.hero-sub{color:var(--muted)}
+.round{border-radius:16px}
+.grad-bar{height:3px;background:var(--ig-gradient);border-radius:3px;filter:saturate(110%)}
+
+/* Right-side auth drawer */
+.auth-drawer{position:fixed;top:0;right:-380px;width:380px;max-width:92vw;height:100vh;background:var(--card);border-left:1px solid var(--border);box-shadow:-16px 0 32px rgba(0,0,0,.18);transition:right .25s ease;z-index:1055;display:flex;flex-direction:column}
+.auth-drawer.open{right:0}
+.auth-drawer-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border)}
+.auth-drawer-body{padding:12px 14px;overflow:auto;flex:1}
+.auth-mini{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px}
+.auth-mini .mini-card{border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--bg);display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.auth-mini .mini-card:hover{border-color:#99999955}
+
+/* Theme toggle pill */
+.theme-toggle{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:999px;padding:4px 10px;background:var(--card);cursor:pointer}
+.theme-toggle input{display:none}
+.theme-toggle .dot{width:18px;height:18px;border-radius:50%;background:var(--ig-gradient)}
+
+/* Theme-aware tables */
+.table-ig{background:var(--card); color:var(--fg); border:1px solid var(--border); border-radius:12px}
+.table-ig th, .table-ig td{color:var(--fg); border-color:var(--border)}
+.table-ig thead th{background:transparent; font-weight:700}
+.table-ig a{color:var(--fg)}
+.table-ig a:hover{color:var(--muted)}
+
+/* Instagram pattern-filled progress bars */
+.progress, .progress-ig{height:14px;border-radius:999px; overflow:hidden}
+.progress-ig{background:linear-gradient(90deg, rgba(0,0,0,.08), rgba(0,0,0,.04)); border:1px solid var(--border)}
+.progress-ig .progress-bar{height:100%}
+.progress-ig .progress-bar.bar-ig{background:var(--ig-gradient); position:relative; overflow:hidden}
+.progress-ig .progress-bar.bar-ig::after{
+  content:""; position:absolute; inset:0; opacity:.11; mix-blend-mode:screen;
+  background-size:48px 48px; background-repeat:repeat;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><defs><linearGradient id='gg' x1='0' y1='48' x2='48' y2='0' gradientUnits='userSpaceOnUse'><stop offset='0%' stop-color='%23F58529'/><stop offset='35%' stop-color='%23DD2A7B'/><stop offset='70%' stop-color='%238134AF'/><stop offset='100%' stop-color='%23515BD4'/></linearGradient></defs><g fill='none' stroke='url(%23gg)' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' opacity='0.9'><path d='M8 14c4-6 12-6 16 0 4 6-2 12-8 17-6-5-12-11-8-17z'/><path d='M28 10h14l-5 5-3 11-2-8-4-3z'/><path d='M8 34c6-3 12 0 12 6 0 4-4 6-8 4'/><path d='M36 12v14l-5-3-5 3V12h10z'/></g></svg>");
+  animation: igBarSlide 8s linear infinite;
+}
+@keyframes igBarSlide{0%{background-position:0 0}100%{background-position:200px 0}}
+
+/* Themed dropdown/select */
+.select-ig{background:var(--card); color:var(--fg); border:1px solid var(--border); border-radius:12px; padding:.5rem .75rem; appearance:none; -webkit-appearance:none; -moz-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none' stroke='%23999'%3E%3Cpath d='M5 7l5 5 5-5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right .6rem center; background-size:16px}
+.select-ig:focus{border-color:#fd1d1d; box-shadow:0 0 0 .2rem rgba(221,42,123,.15); outline:none}
+.select-ig option{background:var(--card); color:var(--fg)}
+/* === Dark Mode Fix for Tables === */
+[data-theme="dark"] .table-ig,
+[data-theme="dark"] .table-ig th,
+[data-theme="dark"] .table-ig td {
+  color: var(--fg) !important;
+  background-color: var(--card) !important;
+  border-color: var(--border) !important;
+}
+
+/* Optional: softer hover effect that works on dark mode */
+[data-theme="dark"] .table-ig tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+[data-theme="dark"] .table-ig a {
+  color: var(--fg) !important;
+}
+[data-theme="dark"] .table-ig a:hover {
+  color: var(--muted) !important;
+}

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading Profile - Influencer Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body { 
+            background: var(--bg); 
+            color: var(--fg); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow-x: hidden;
+        }
+        .loading-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+        }
+        .loading-content {
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        .loading-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: var(--ig-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+        .loading-subtitle {
+            font-size: 1.2rem;
+            color: var(--muted);
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        .progress-container {
+            margin: 30px 0;
+        }
+        .progress-ig {
+            height: 20px;
+            border-radius: 10px;
+            background: linear-gradient(90deg, rgba(0,0,0,.08), rgba(0,0,0,.04));
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .progress-bar-ig {
+            height: 100%;
+            background: var(--ig-gradient);
+            position: relative;
+            overflow: hidden;
+            transition: width 0.3s ease;
+        }
+        .progress-bar-ig::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            opacity: 0.11;
+            mix-blend-mode: screen;
+            background-size: 48px 48px;
+            background-repeat: repeat;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><defs><linearGradient id='gg' x1='0' y1='48' x2='48' y2='0' gradientUnits='userSpaceOnUse'><stop offset='0%' stop-color='%23F58529'/><stop offset='35%' stop-color='%23DD2A7B'/><stop offset='70%' stop-color='%238134AF'/><stop offset='100%' stop-color='%23515BD4'/></linearGradient></defs><g fill='none' stroke='url(%23gg)' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' opacity='0.9'><path d='M8 14c4-6 12-6 16 0 4 6-2 12-8 17-6-5-12-11-8-17z'/><path d='M28 10h14l-5 5-3 11-2-8-4-3z'/><path d='M8 34c6-3 12 0 12 6 0 4-4 6-8 4'/><path d='M36 12v14l-5-3-5 3V12h10z'/></g></svg>");
+            animation: igBarSlide 8s linear infinite;
+        }
+        @keyframes igBarSlide {
+            0% { background-position: 0 0; }
+            100% { background-position: 200px 0; }
+        }
+        .progress-label {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-weight: 700;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+        .status-message {
+            font-size: 1rem;
+            color: var(--muted);
+            margin-top: 15px;
+            min-height: 24px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top: 4px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .theme-toggle-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        @media (max-width: 768px) {
+            .loading-title {
+                font-size: 2rem;
+            }
+            .loading-subtitle {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle -->
+    <div class="theme-toggle-container">
+        <span class="theme-toggle" id="themeToggle">
+            <span class="dot"></span>
+            <span>Theme</span>
+        </span>
+    </div>
+    
+    <div class="loading-container">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h1 class="loading-title">Analyzing Profile</h1>
+            <h2 class="loading-subtitle">@{{ username }}</h2>
+            
+            <div class="progress-container">
+                <div class="position-relative progress progress-ig">
+                    <div class="progress-bar progress-bar-ig" id="progressBar" style="width: 0%;"></div>
+                    <div class="progress-label" id="progressLabel">0%</div>
+                </div>
+                <div class="status-message" id="statusMessage">Starting analysis...</div>
+            </div>
+            
+            <div class="mt-4">
+                <p class="text-muted">This may take a few moments while we gather and analyze the latest data.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Theme toggle functionality
+        const rootEl = document.documentElement;
+        if (localStorage.getItem('theme') === 'dark') {
+            rootEl.setAttribute('data-theme', 'dark');
+        }
+        
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const isDark = rootEl.getAttribute('data-theme') === 'dark';
+            if (isDark) {
+                rootEl.removeAttribute('data-theme');
+                localStorage.removeItem('theme');
+            } else {
+                rootEl.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        // Profile loading functionality
+        const username = '{{ username }}';
+        const progressBar = document.getElementById('progressBar');
+        const progressLabel = document.getElementById('progressLabel');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // Track retry attempts to prevent infinite loops
+        let retryCount = 0;
+        const maxRetries = 3;
+
+        // Start the profile loading process
+        async function startProfileLoading() {
+            try {
+                console.log(`Starting profile loading for: ${username}`);
+                
+                // Check if profile is already being processed or completed
+                try {
+                    const checkResponse = await fetch(`/profile/result/${username}`);
+                    if (checkResponse.ok) {
+                        console.log('Profile already completed, redirecting...');
+                        window.location.href = `/profile/${username}`;
+                        return;
+                    }
+                } catch (error) {
+                    console.log('No existing result found, will continue loading...');
+                }
+                
+                // Check if profile is currently loading
+                try {
+                    const progressCheckResponse = await fetch(`/profile/check-progress/${username}`);
+                    if (progressCheckResponse.ok) {
+                        const progressData = await progressCheckResponse.json();
+                        if (progressData.status === 'loading') {
+                            console.log('Profile already loading, connecting to progress stream...');
+                            connectToProgressStream();
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.log('No existing progress found, starting new process...');
+                }
+                
+                // Start the loading process
+                console.log('Starting new profile loading process...');
+                const response = await fetch(`/profile/load/${username}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to start profile loading: ${response.status}`);
+                }
+                
+                const loadData = await response.json();
+                console.log('Load response:', loadData);
+                
+                // Handle different response statuses
+                if (loadData.status === 'already_loading') {
+                    console.log('Profile already loading, connecting to progress stream...');
+                } else if (loadData.status === 'already_completed') {
+                    console.log('Profile already completed, redirecting...');
+                    window.location.href = `/profile/${username}`;
+                    return;
+                } else if (loadData.status === 'started') {
+                    console.log('Profile loading started successfully');
+                } else {
+                    console.log('Unknown status from load endpoint:', loadData.status);
+                }
+
+                // Set up progress tracking
+                connectToProgressStream();
+            } catch (error) {
+                console.error('Error starting profile loading:', error);
+                statusMessage.textContent = 'Failed to start analysis. Redirecting...';
+                
+                setTimeout(() => {
+                    window.location.href = '/brand';
+                }, 2000);
+            }
+        }
+
+        // Function to connect to progress stream
+        function connectToProgressStream() {
+            console.log(`Setting up EventSource for: /profile/progress/${username}`);
+            const eventSource = new EventSource(`/profile/progress/${username}`);
+            let progressTimeout;
+                
+            // Set a timeout to prevent infinite loading
+            const maxLoadingTime = 60000; // 60 seconds
+            progressTimeout = setTimeout(() => {
+                console.warn('Profile loading timeout reached');
+                statusMessage.textContent = 'Loading is taking longer than expected. Redirecting anyway...';
+                eventSource.close();
+                setTimeout(() => {
+                    window.location.href = `/profile/${username}`;
+                }, 2000);
+            }, maxLoadingTime);
+            
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                console.log('Progress update:', data);
+                
+                if (data.status === 'complete') {
+                    clearTimeout(progressTimeout);
+                    progressBar.style.width = '100%';
+                    progressLabel.textContent = '100%';
+                    statusMessage.textContent = 'Analysis complete! Redirecting...';
+                    console.log('Profile loading complete, redirecting...');
+                    
+                    // Redirect to the profile page
+                    setTimeout(() => {
+                        console.log('Redirecting to profile page...');
+                        window.location.href = `/profile/${username}`;
+                    }, 1000);
+                    
+                    eventSource.close();
+                } else if (data.status === 'error') {
+                    clearTimeout(progressTimeout);
+                    statusMessage.textContent = `Error: ${data.message}`;
+                    console.error('Profile loading error:', data.message);
+                    eventSource.close();
+                    
+                    // Redirect back to home after error
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 3000);
+                } else {
+                    // Update progress
+                    progressBar.style.width = `${data.progress}%`;
+                    progressLabel.textContent = `${data.progress}%`;
+                    statusMessage.textContent = data.message;
+                }
+            };
+
+            eventSource.onopen = function(event) {
+                console.log('EventSource connection opened');
+            };
+
+            eventSource.onerror = function(event) {
+                console.error('EventSource failed:', event);
+                console.error('EventSource readyState:', eventSource.readyState);
+                statusMessage.textContent = 'Connection lost. Checking profile status...';
+                eventSource.close();
+                
+                // Check if profile is ready instead of retrying
+                setTimeout(() => {
+                    checkProfileStatus();
+                }, 2000);
+            };
+
+            // Add a fallback timeout in case EventSource never connects
+            const eventSourceTimeout = setTimeout(() => {
+                console.warn('EventSource connection timeout, falling back to polling');
+                statusMessage.textContent = 'Switching to polling mode...';
+                eventSource.close();
+                checkProfileStatus();
+            }, 10000); // 10 seconds timeout
+        }
+
+        // Add a function to check profile status
+        async function checkProfileStatus() {
+            try {
+                console.log(`Checking profile status... (attempt ${retryCount + 1}/${maxRetries})`);
+                const response = await fetch(`/profile/result/${username}`);
+                if (response.ok) {
+                    console.log('Profile is ready, redirecting...');
+                    window.location.href = `/profile/${username}`;
+                } else {
+                    console.log('Profile not ready yet, checking if still loading...');
+                    // Check if profile is still in progress
+                    const progressResponse = await fetch(`/profile/progress/${username}`);
+                    if (progressResponse.ok) {
+                        const progressData = await progressResponse.json();
+                        if (progressData.status === 'loading') {
+                            statusMessage.textContent = 'Still processing... Please wait...';
+                            // Don't retry, just wait for the current process to complete
+                            setTimeout(() => {
+                                checkProfileStatus();
+                            }, 5000);
+                        } else {
+                            statusMessage.textContent = 'Processing complete. Redirecting...';
+                            setTimeout(() => {
+                                window.location.href = `/profile/${username}`;
+                            }, 2000);
+                        }
+                    } else {
+                        retryCount++;
+                        if (retryCount < maxRetries) {
+                            statusMessage.textContent = `Unable to check status. Retrying... (${retryCount}/${maxRetries})`;
+                            setTimeout(() => {
+                                checkProfileStatus();
+                            }, 3000);
+                        } else {
+                            statusMessage.textContent = 'Unable to check status. Redirecting anyway...';
+                            setTimeout(() => {
+                                window.location.href = `/profile/${username}`;
+                            }, 2000);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking profile status:', error);
+                retryCount++;
+                if (retryCount < maxRetries) {
+                    statusMessage.textContent = `Error checking status. Retrying... (${retryCount}/${maxRetries})`;
+                    setTimeout(() => {
+                        checkProfileStatus();
+                    }, 3000);
+                } else {
+                    statusMessage.textContent = 'Error checking status. Redirecting anyway...';
+                    setTimeout(() => {
+                        window.location.href = `/profile/${username}`;
+                    }, 2000);
+                }
+            }
+        }
+
+        // Start loading when page loads
+        startProfileLoading();
+    </script>
+</body>
+</html>

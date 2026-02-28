@@ -1,0 +1,267 @@
+<!-- templates/creator.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creator - Influencer Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body { background:var(--bg); color:var(--fg); min-height:100vh; display:flex; flex-direction:column; }
+        .container { text-align:center; padding:84px 20px 20px; flex-grow:1; }
+        .form-section { max-width: 640px; margin:0 auto; background:var(--card); color:var(--fg); padding:20px; border-radius:16px; border:1px solid var(--border); }
+        .table { background:var(--card); color:var(--fg); border:1px solid var(--border); border-radius:12px; }
+        .table th, .table td { border:1px solid var(--border); }
+        #statusMessage { color:var(--muted); }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand navbar-ig sticky-top px-3 py-2">
+        <div class="brand-badge">
+            <span class="logo-sq round" style="background:none;box-shadow:none"><img src="{{ url_for('static', filename='logo1.jpg') }}" alt="logo" style="width:22px;height:22px;border-radius:8px"></span>
+            <span class="app-name">Influencer Analyzer</span>
+        </div>
+        <div class="ms-auto d-flex align-items-center gap-3">
+            <span class="theme-toggle" id="themeToggle"><span class="dot"></span><span>Theme</span></span>
+            <a class="link-ig" href="{{ url_for('home') }}">Home</a>
+            <a class="link-ig" href="{{ url_for('creator') }}">Creator</a>
+            <a class="link-ig" href="{{ url_for('brand') }}">Brand</a>
+            {% if session.get('email') %}
+                <a class="link-ig" href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <button class="btn btn-ghost" id="openAuth">Log in / Sign up</button>
+            {% endif %}
+        </div>
+    </nav>
+    <div class="grad-bar"></div>
+
+    <div class="container">
+        <div class="form-section card-ig mt-2">
+            <h2 class="text-center mb-4 hero-title">Creator Analysis</h2>
+            <form id="influencerForm">
+                <div class="mb-3">
+                    <label for="usernameInput" class="form-label visually-hidden">Enter Instagram username</label>
+                    <input type="text" id="usernameInput" name="username" class="form-control" placeholder="Enter Instagram username" required>
+                </div>
+                <button type="submit" class="btn btn-ig w-100 mt-2">Analyze</button>
+                <div class="progress mt-3" id="progressBar" style="display:none;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%; background: linear-gradient(135deg, #F58529, #DD2A7B 40%, #8134AF 70%, #515BD4);" id="progressBarInner"></div>
+                </div>
+                <div id="statusMessage">Enter a username and please wait while we fetch influencer data...</div>
+            </form>
+        </div>
+
+        <div id="results" class="table-responsive" style="display:none;">
+            <h3 class="text-center mt-5 hero-title">Influencer Details</h3>
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Full Name</th>
+                        <th>Followers</th>
+                        <th>Following</th>
+                        <th>Avg Likes</th>
+                        <th>Avg Comments</th>
+                        <th>Engagement %</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Right-side Auth Drawer -->
+    <aside class="auth-drawer" id="authDrawer" aria-hidden="true">
+        <div class="auth-drawer-header">
+            <div class="brand-badge">
+                <span class="logo-sq round" style="background:none;box-shadow:none"><img src="{{ url_for('static', filename='original-logo.png') }}" alt="logo" style="width:18px;height:18px;border-radius:8px"></span>
+                <span class="app-name">Sign in</span>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="closeAuth">Close</button>
+        </div>
+        <div class="auth-drawer-body">
+            <div class="auth-mini">
+                <div class="mini-card" id="miniLogin"><span>Login</span><span>→</span></div>
+                <div class="mini-card" id="miniSignup"><span>Sign up</span><span>→</span></div>
+            </div>
+            <div class="mb-3">
+                <div id="loginError" class="alert alert-danger d-none"></div>
+                <form id="loginForm">
+                    <div class="mb-2 text-start">
+                        <label for="loginEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="loginEmail" required>
+                    </div>
+                    <div class="mb-2 text-start">
+                        <label for="loginPassword" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-ig w-100 mb-2">Log in</button>
+                </form>
+            </div>
+            <hr>
+            <div class="mb-3">
+                <div id="signupError" class="alert alert-danger d-none"></div>
+                <form id="signupForm">
+                    <div class="mb-2 text-start">
+                        <label for="signupEmail" class="form-label">Company Email</label>
+                        <input type="email" class="form-control" id="signupEmail" required>
+                    </div>
+                    <div class="mb-2 text-start">
+                        <label for="signupPassword" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="signupPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-ig w-100">Create account</button>
+                </form>
+            </div>
+    </div>
+    </aside>
+
+    <div id="messageBox" class="message-box" style="display:none;"></div>
+
+    <!-- Profile Loading Popup -->
+    <div class="modal fade modal-ig" id="profileLoadingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="profileLoadingTitle">Loading Profile</h5>
+                </div>
+                <div class="modal-body text-center">
+                    <p id="profileLoadingMessage">Fetching profile page of <span id="profileUsername"></span>...</p>
+                    <div class="progress mt-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%; background: linear-gradient(135deg, #F58529, #DD2A7B 40%, #8134AF 70%, #515BD4);" id="profileProgressBar"></div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted" id="profileProgressText">0%</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme toggle
+        const rootEl = document.documentElement;
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const isDark = rootEl.getAttribute('data-theme') === 'dark';
+            if (isDark) { rootEl.removeAttribute('data-theme'); localStorage.removeItem('theme'); }
+            else { rootEl.setAttribute('data-theme','dark'); localStorage.setItem('theme','dark'); }
+        });
+        if (localStorage.getItem('theme') === 'dark') rootEl.setAttribute('data-theme','dark');
+
+        // Drawer controls
+        const drawer = document.getElementById('authDrawer');
+        const openBtn = document.getElementById('openAuth');
+        if (openBtn) openBtn.addEventListener('click', () => drawer.classList.add('open'));
+        document.getElementById('closeAuth').addEventListener('click', () => drawer.classList.remove('open'));
+        document.getElementById('miniLogin').addEventListener('click', () => document.getElementById('loginEmail').focus());
+        document.getElementById('miniSignup').addEventListener('click', () => document.getElementById('signupEmail').focus());
+
+        // Profile link popup functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('profile-link')) {
+                e.preventDefault();
+                const username = e.target.getAttribute('data-username');
+                showProfileLoadingPopup(username);
+            }
+        });
+
+        function showProfileLoadingPopup(username) {
+            // Directly navigate to the profile loading page
+            window.location.href = `/profile/${username}`;
+        }
+    </script>
+
+    <script>
+        // Creator existing logic preserved
+        function showMessageBox(message) {
+            const box = document.getElementById('messageBox');
+            box.textContent = message; box.style.display = 'block';
+        }
+        function hideMessageBox() { document.getElementById('messageBox').style.display = 'none'; }
+
+        document.getElementById("influencerForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const username = document.getElementById("usernameInput").value.trim();
+            const progressBar = document.getElementById("progressBar");
+            const progressBarInner = document.getElementById("progressBarInner");
+            const statusMessage = document.getElementById("statusMessage");
+            const resultsDiv = document.getElementById("results");
+            const resultsBody = document.getElementById("resultsBody");
+
+            resultsDiv.style.display = "none";
+            resultsBody.innerHTML = "";
+            progressBar.style.display = "block";
+            progressBarInner.style.width = "0%";
+            statusMessage.style.display = "block";
+            statusMessage.innerText = "🔍 Fetching data. Please wait...";
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                if (progress < 90) { progress += 5; progressBarInner.style.width = `${progress}%`; }
+            }, 500);
+
+            try {
+                const res = await fetch("/analyze_influencer", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ username }) });
+                clearInterval(interval);
+                progressBarInner.style.width = "100%";
+                if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Unknown error during analysis."); }
+                const data = await res.json();
+                if (!data || Object.keys(data).length === 0) { showMessageBox(`No valid influencer data found for ${username}.`); return; }
+                const row = `<tr>
+                    <td><a href="/profile/${data.username}" class="link-ig profile-link" data-username="${data.username}">@${data.username}</a></td>
+                    <td>${data.full_name || '-'}</td>
+                    <td>${data.followers || 0}</td>
+                    <td>${data.following || 0}</td>
+                    <td>${data.avg_likes || 0}</td>
+                    <td>${data.avg_comments || 0}</td>
+                    <td>${data.engagement_percent || 0}%</td>
+                </tr>`;
+                resultsBody.innerHTML = row;
+                resultsDiv.style.display = "block";
+            } catch (error) {
+                showMessageBox(`Error: ${error.message}`);
+            } finally {
+                setTimeout(() => { progressBar.style.display = "none"; statusMessage.style.display = "none"; }, 500);
+            }
+        });
+    </script>
+
+    <script>
+        // Auth forms
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                const errorDiv = document.getElementById('loginError');
+                errorDiv.classList.add('d-none');
+                try {
+                    const res = await fetch('/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
+                    const data = await res.json();
+                    if (data.success) { window.location.reload(); } else { errorDiv.textContent = data.error || 'Login failed'; errorDiv.classList.remove('d-none'); }
+                } catch(err){ errorDiv.textContent = 'Network error. Try again.'; errorDiv.classList.remove('d-none'); }
+            });
+        }
+        if (signupForm) {
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('signupEmail').value;
+                const password = document.getElementById('signupPassword').value;
+                const errorDiv = document.getElementById('signupError');
+                errorDiv.classList.add('d-none');
+                try {
+                    const res = await fetch('/signup', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
+                    const data = await res.json();
+                    if (data.success) { window.location.reload(); } else { errorDiv.textContent = data.error || 'Signup failed'; errorDiv.classList.remove('d-none'); }
+                } catch(err){ errorDiv.textContent = 'Network error. Try again.'; errorDiv.classList.remove('d-none'); }
+            });
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

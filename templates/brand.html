@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brand - Influencer Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background:var(--bg); color:var(--fg); min-height:100vh; }
+        .form-section { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-top:84px; }
+        .progress-label{ position:absolute; width:100%; text-align:center; color:#fff; font-weight:700 }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand navbar-ig sticky-top px-3 py-2">
+        <div class="brand-badge">
+            <span class="logo-sq round" style="background:none;box-shadow:none"><img src="{{ url_for('static', filename='logo1.jpg') }}" alt="logo" style="width:22px;height:22px;border-radius:8px"></span>
+            <span class="app-name">Influencer Analyzer</span>
+        </div>
+        <div class="ms-auto d-flex align-items-center gap-3">
+            <span class="theme-toggle" id="themeToggle"><span class="dot"></span><span>Theme</span></span>
+            <a class="link-ig" href="{{ url_for('home') }}">Home</a>
+            <a class="link-ig" href="{{ url_for('creator') }}">Creator</a>
+            <a class="link-ig" href="{{ url_for('brand') }}">Brand</a>
+            {% if session.get('email') %}
+                <a class="link-ig" href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <button class="btn btn-ghost" id="openAuth">Log in / Sign up</button>
+            {% endif %}
+        </div>
+    </nav>
+    <div class="grad-bar"></div>
+
+    <div class="container">
+        <div class="form-section card-ig">
+            <h2 class="text-center mb-3 hero-title">Brand Discovery</h2>
+            <div class="mb-3">
+                <select id="nicheSelect" class="form-select select-ig">
+                    <option disabled selected>Loading niches...</option>
+                </select>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-ig flex-grow-1" onclick="loadInfluencers()">Load Influencers</button>
+                <button class="btn btn-ghost flex-grow-1" onclick="showGrowth()">Show Growth</button>
+                {% if not session.get('email') %}
+                <button class="btn btn-ghost" id="openAuth2">Open Login</button>
+                {% endif %}
+            </div>
+            <div class="position-relative progress progress-ig mt-3" id="progressBar" style="display:none;">
+                <div class="progress-bar bar-ig" style="width: 0%; background: linear-gradient(135deg, #F58529, #DD2A7B 40%, #8134AF 70%, #515BD4);" id="progressBarInner"></div>
+                <div class="progress-label" id="progressLabel">0%</div>
+            </div>
+            <div id="statusMessage" class="hero-sub" style="display:none;">Fetching influencers, please wait...</div>
+            <div class="position-relative progress progress-ig mt-3" id="growthProgressBar" style="display:none;">
+                <div class="progress-bar bar-ig" style="width: 0%; background: linear-gradient(135deg, #F58529, #DD2A7B 40%, #8134AF 70%, #515BD4);" id="growthProgressBarInner"></div>
+                <div class="progress-label" id="growthProgressLabel">0%</div>
+            </div>
+            <div id="growthStatusMessage" class="hero-sub" style="display:none;">Fetching growth data, please wait...</div>
+        </div>
+
+        <div id="results" class="table-responsive" style="display:none;"></div>
+
+        <div class="row mt-4">
+            <div id="growthSection" class="col-md-6" style="display:none;">
+                <h3 class="text-center hero-title">Growth Trends</h3>
+                <canvas id="growthChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right-side Auth Drawer -->
+    <aside class="auth-drawer" id="authDrawer" aria-hidden="true">
+        <div class="auth-drawer-header">
+            <div class="brand-badge">
+                <span class="logo-sq round" style="background:none;box-shadow:none"><img src="{{ url_for('static', filename='logo1.jpg') }}" alt="logo" style="width:18px;height:18px;border-radius:8px"></span>
+                <span class="app-name">Sign in</span>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="closeAuth">Close</button>
+        </div>
+        <div class="auth-drawer-body">
+            <div class="auth-mini">
+                <div class="mini-card" id="miniLogin">
+                    <span>Login</span>
+                    <span>→</span>
+                </div>
+                <div class="mini-card" id="miniSignup">
+                    <span>Sign up</span>
+                    <span>→</span>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div id="loginError" class="alert alert-danger d-none"></div>
+                <form id="loginForm">
+                    <div class="mb-2 text-start">
+                        <label for="loginEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="loginEmail" required>
+                    </div>
+                    <div class="mb-2 text-start">
+                        <label for="loginPassword" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-ig w-100 mb-2">Log in</button>
+                </form>
+            </div>
+            <hr>
+            <div class="mb-3">
+                <div id="signupError" class="alert alert-danger d-none"></div>
+                <form id="signupForm">
+                    <div class="mb-2 text-start">
+                        <label for="signupEmail" class="form-label">Company Email</label>
+                        <input type="email" class="form-control" id="signupEmail" required>
+                    </div>
+                    <div class="mb-2 text-start">
+                        <label for="signupPassword" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="signupPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-ig w-100">Create account</button>
+                </form>
+            </div>
+        </div>
+    </aside>
+
+    <script>
+        // Theme toggle
+        const rootEl = document.documentElement;
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const isDark = rootEl.getAttribute('data-theme') === 'dark';
+            if (isDark) { rootEl.removeAttribute('data-theme'); localStorage.removeItem('theme'); }
+            else { rootEl.setAttribute('data-theme','dark'); localStorage.setItem('theme','dark'); }
+        });
+        if (localStorage.getItem('theme') === 'dark') rootEl.setAttribute('data-theme','dark');
+
+        // Auth drawer controls
+        const drawer = document.getElementById('authDrawer');
+        const openers = [document.getElementById('openAuth'), document.getElementById('openAuth2')].filter(Boolean);
+        openers.forEach(btn => btn.addEventListener('click', () => drawer.classList.add('open')));
+        document.getElementById('closeAuth').addEventListener('click', () => drawer.classList.remove('open'));
+        document.getElementById('miniLogin').addEventListener('click', () => document.getElementById('loginEmail').focus());
+        document.getElementById('miniSignup').addEventListener('click', () => document.getElementById('signupEmail').focus());
+
+        // Auth forms
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                const errorDiv = document.getElementById('loginError');
+                errorDiv.classList.add('d-none');
+                try {
+                    const res = await fetch('/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
+                    const data = await res.json();
+                    if (data.success) { window.location.reload(); } else { errorDiv.textContent = data.error || 'Login failed'; errorDiv.classList.remove('d-none'); }
+                } catch(err){ errorDiv.textContent = 'Network error. Try again.'; errorDiv.classList.remove('d-none'); }
+            });
+        }
+        if (signupForm) {
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('signupEmail').value;
+                const password = document.getElementById('signupPassword').value;
+                const errorDiv = document.getElementById('signupError');
+                errorDiv.classList.add('d-none');
+                try {
+                    const res = await fetch('/signup', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
+                    const data = await res.json();
+                    if (data.success) { window.location.reload(); } else { errorDiv.textContent = data.error || 'Signup failed'; errorDiv.classList.remove('d-none'); }
+                } catch(err){ errorDiv.textContent = 'Network error. Try again.'; errorDiv.classList.remove('d-none'); }
+            });
+        }
+    </script>
+
+    <script>
+        let growthChartInstance;
+        let influencerData = {};
+        let nicheTables = {};
+
+        async function loadNiches() {
+            try {
+                const res = await fetch("/get_niches");
+                const niches = await res.json();
+                const select = document.getElementById("nicheSelect");
+                select.innerHTML = "";
+                niches.forEach(n => {
+                    const opt = document.createElement("option");
+                    opt.value = n;
+                    opt.textContent = n.charAt(0).toUpperCase() + n.slice(1);
+                    select.appendChild(opt);
+                });
+            } catch (error) {
+                console.error("Error loading niches:", error);
+                alert("Failed to load niches. Please try again.");
+            }
+        }
+
+        async function loadInfluencers() {
+            const niche = document.getElementById("nicheSelect").value;
+            if (!niche) return alert("Select a niche first.");
+
+            const progressBar = document.getElementById("progressBar");
+            const progressBarInner = document.getElementById("progressBarInner");
+            const progressLabel = document.getElementById("progressLabel");
+            const statusMessage = document.getElementById("statusMessage");
+            const resultsDiv = document.getElementById("results");
+
+            progressBar.style.display = "block";
+            progressBarInner.style.width = "0%";
+            progressLabel.textContent = '0%';
+            statusMessage.style.display = "block";
+            resultsDiv.style.display = 'none';
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                if (progress < 95) {
+                    progress += Math.random() * 7 + 3; // accelerate then slow
+                    if (progress > 95) progress = 95;
+                    progressBarInner.style.width = `${Math.floor(progress)}%`;
+                    progressLabel.textContent = `${Math.floor(progress)}%`;
+                }
+            }, 300);
+
+            try {
+                const res = await fetch("/get_influencers", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({ niche })
+                });
+                influencerData[niche] = await res.json();
+                fillTable(niche, influencerData[niche]);
+                clearInterval(interval);
+                progressBarInner.style.width = "100%";
+                progressLabel.textContent = '100%';
+                setTimeout(()=>{ resultsDiv.style.display = "block"; }, 200);
+            } catch (error) {
+                console.error("Error loading influencers:", error);
+                alert(`Error: ${error.message}`);
+            } finally {
+                setTimeout(() => {
+                    progressBar.style.display = "none";
+                    statusMessage.style.display = "none";
+                }, 600);
+            }
+        }
+
+        function fillTable(niche, data) {
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = '';
+            const nicheDiv = document.createElement("div");
+            nicheDiv.className = "table-responsive";
+            nicheDiv.id = `niche-${niche}`;
+            const header = document.createElement("h3"); header.className = "text-center hero-title"; header.textContent = `${niche.charAt(0).toUpperCase() + niche.slice(1)} Influencers`; nicheDiv.appendChild(header);
+            const table = document.createElement("table");
+            table.className = "table table-bordered table-hover table-ig";
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Followers</th>
+                        <th>Following</th>
+                        <th>Avg Likes</th>
+                        <th>Avg Comments</th>
+                        <th>Engagement %</th>
+                        <th>Category</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody-${niche}"></tbody>
+            `;
+            nicheDiv.appendChild(table);
+            resultsDiv.appendChild(nicheDiv);
+
+            const tbody = document.getElementById(`resultsBody-${niche}`);
+            data.forEach(d => {
+                const row = `
+                    <tr title="Avg Likes: ${d.avg_likes || '-'} | Avg Comments: ${d.avg_comments || '-'}">
+                        <td><a href="/profile/${d.username}" class="link-ig profile-link" data-username="${d.username}">@${d.username}</a></td>
+                        <td>${d.followers || "-"}</td>
+                        <td>${d.following || "-"}</td>
+                        <td>${d.avg_likes || "-"}</td>
+                        <td>${d.avg_comments || "-"}</td>
+                        <td>${d.avg_engagement_percent || "-"}</td>
+                        <td>${d.category || "-"}</td>
+                    </tr>`;
+                tbody.innerHTML += row;
+            });
+            nicheTables[niche] = nicheDiv;
+        }
+
+        async function showGrowth() {
+            const niche = document.getElementById("nicheSelect").value;
+            if (!niche || !influencerData[niche]) return alert("Load influencers for a niche first.");
+
+            const progressBar = document.getElementById("growthProgressBar");
+            const progressBarInner = document.getElementById("growthProgressBarInner");
+            const progressLabel = document.getElementById("growthProgressLabel");
+            const statusMessage = document.getElementById("growthStatusMessage");
+
+            progressBar.style.display = "block";
+            progressBarInner.style.width = "0%";
+            progressLabel.textContent = '0%';
+            statusMessage.style.display = "block";
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                if (progress < 95) {
+                    progress += Math.random() * 7 + 3;
+                    if (progress > 95) progress = 95;
+                    progressBarInner.style.width = `${Math.floor(progress)}%`;
+                    progressLabel.textContent = `${Math.floor(progress)}%`;
+                }
+            }, 300);
+
+            try {
+                const username = document.querySelector(`#resultsBody-${niche} tr td a`).textContent.replace("@", "");
+                const res = await fetch("/growth", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ username }) });
+                const data = await res.json(); if (data.error) throw new Error(data.error);
+                document.getElementById("growthSection").style.display = "block";
+                if (growthChartInstance) growthChartInstance.destroy();
+                growthChartInstance = new Chart(document.getElementById("growthChart"), {
+                    type: "line",
+                    data: { 
+                        labels: data.timestamps.map(t => new Date(t).toLocaleDateString()), 
+                        datasets: [ 
+                            { 
+                                label: "Follower Growth", 
+                                data: data.follower_growth, 
+                                borderColor: "#F58529", 
+                                backgroundColor: "rgba(245,133,41,0.2)", 
+                                fill: true,
+                                tension: 0.4
+                            }, 
+                            { 
+                                label: "Engagement Trend (%)", 
+                                data: data.engagement_trend, 
+                                borderColor: "#DD2A7B", 
+                                backgroundColor: "rgba(221,42,123,0.2)", 
+                                fill: true,
+                                tension: 0.4
+                            } 
+                        ] 
+                    },
+                    options: { 
+                        scales: { 
+                            y: { beginAtZero: true }, 
+                            x: { ticks: { maxRotation:45, minRotation:45 } } 
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: 'var(--fg)'
+                                }
+                            }
+                        }
+                    }
+                });
+                clearInterval(interval); progressBarInner.style.width = "100%"; progressLabel.textContent = '100%';
+            } catch (error) {
+                console.error("Error loading growth data:", error);
+                alert(`Error: ${error.message}`);
+            } finally {
+                setTimeout(() => { progressBar.style.display = "none"; statusMessage.style.display = "none"; }, 600);
+            }
+        }
+
+        loadNiches();
+    </script>
+
+    <!-- Profile Loading Popup -->
+    <div class="modal fade modal-ig" id="profileLoadingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="profileLoadingTitle">Loading Profile</h5>
+                </div>
+                <div class="modal-body text-center">
+                    <p id="profileLoadingMessage">Fetching profile page of <span id="profileUsername"></span>...</p>
+                    <div class="progress mt-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%; background: linear-gradient(135deg, #F58529, #DD2A7B 40%, #8134AF 70%, #515BD4);" id="profileProgressBar"></div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted" id="profileProgressText">0%</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Profile link popup functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('profile-link')) {
+                e.preventDefault();
+                const username = e.target.getAttribute('data-username');
+                showProfileLoadingPopup(username);
+            }
+        });
+
+        function showProfileLoadingPopup(username) {
+            // Directly navigate to the profile loading page
+            window.location.href = `/profile/${username}`;
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

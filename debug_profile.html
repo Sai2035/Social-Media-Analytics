@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Profile Loading</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .log { background: #f5f5f5; padding: 10px; border-radius: 3px; max-height: 300px; overflow-y: auto; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        input { padding: 8px; margin: 5px; width: 200px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Profile Loading Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h3>Test Profile Loading</h3>
+        <input type="text" id="usernameInput" placeholder="Enter username (e.g., abimilano)" value="abimilano">
+        <button onclick="testProfileLoading()">Test Profile Loading</button>
+        <button onclick="checkProfileStatus()">Check Profile Status</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <div class="debug-section">
+        <h3>Debug Log</h3>
+        <div id="debugLog" class="log"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>Quick Actions</h3>
+        <button onclick="goToProfile('abimilano')">Go to Profile Page</button>
+        <button onclick="goToLoading('abimilano')">Go to Loading Page</button>
+        <button onclick="testAPI()">Test API Endpoints</button>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        function clearLog() {
+            document.getElementById('debugLog').innerHTML = '';
+        }
+        
+        async function testProfileLoading() {
+            const username = document.getElementById('usernameInput').value;
+            if (!username) {
+                log('❌ Please enter a username');
+                return;
+            }
+            
+            log(`🚀 Testing profile loading for: ${username}`);
+            
+            try {
+                // Test load endpoint
+                log('📡 Calling /profile/load/' + username);
+                const loadResponse = await fetch(`/profile/load/${username}`);
+                const loadData = await loadResponse.json();
+                log(`✅ Load response: ${JSON.stringify(loadData)}`);
+                
+                // Test progress stream
+                log('📡 Setting up progress stream...');
+                const eventSource = new EventSource(`/profile/progress/${username}`);
+                
+                eventSource.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    log(`📊 Progress: ${JSON.stringify(data)}`);
+                    
+                    if (data.status === 'complete') {
+                        log('✅ Profile loading completed!');
+                        eventSource.close();
+                    } else if (data.status === 'error') {
+                        log(`❌ Profile loading error: ${data.message}`);
+                        eventSource.close();
+                    }
+                };
+                
+                eventSource.onerror = function(event) {
+                    log('❌ EventSource error occurred');
+                    eventSource.close();
+                };
+                
+                // Set timeout
+                setTimeout(() => {
+                    log('⏰ Timeout reached, closing stream');
+                    eventSource.close();
+                }, 30000);
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+        
+        async function checkProfileStatus() {
+            const username = document.getElementById('usernameInput').value;
+            if (!username) {
+                log('❌ Please enter a username');
+                return;
+            }
+            
+            log(`🔍 Checking profile status for: ${username}`);
+            
+            try {
+                const response = await fetch(`/profile/result/${username}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`✅ Profile is ready: ${JSON.stringify(data, null, 2)}`);
+                } else {
+                    log(`❌ Profile not ready: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                log(`❌ Error checking status: ${error.message}`);
+            }
+        }
+        
+        function goToProfile(username) {
+            log(`🔗 Redirecting to profile page: /profile/${username}`);
+            window.location.href = `/profile/${username}`;
+        }
+        
+        function goToLoading(username) {
+            log(`🔗 Redirecting to loading page: /profile/${username}`);
+            window.location.href = `/profile/${username}`;
+        }
+        
+        async function testAPI() {
+            log('🧪 Testing API endpoints...');
+            
+            try {
+                // Test niches endpoint
+                const nichesResponse = await fetch('/get_niches');
+                const niches = await nichesResponse.json();
+                log(`✅ Niches endpoint: ${JSON.stringify(niches)}`);
+                
+                // Test if we're logged in
+                const profileResponse = await fetch('/profile/test');
+                log(`🔐 Profile access: ${profileResponse.status}`);
+                
+            } catch (error) {
+                log(`❌ API test error: ${error.message}`);
+            }
+        }
+        
+        // Auto-log on page load
+        log('🔧 Debug tool loaded. Enter a username and click "Test Profile Loading"');
+    </script>
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ profile.username or 'Unknown' }} Profile - Influencer Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+            position: relative;
+            font-family: 'Poppins', sans-serif;
+        }
+        .profile-sidebar {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            max-width: 350px;
+        }
+        .profile-sidebar h2 {
+            font-weight: 800;
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+        .profile-sidebar h3 {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--muted);
+        }
+        .profile-sidebar p.bio {
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            color: var(--muted);
+            line-height: 1.3;
+        }
+        .profile-stats {
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+        .profile-stats strong {
+            font-weight: 700;
+        }
+        .btn-gradient {
+            background: linear-gradient(90deg, #f58529, #dd2a7b, #8134af, #515bd4);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: background 0.3s ease;
+        }
+        .btn-gradient:hover {
+            background: linear-gradient(90deg, #dd2a7b, #8134af, #515bd4, #f58529);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--ig-purple);
+            color: var(--ig-purple);
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        .btn-outline:hover {
+            background: var(--ig-purple);
+            color: white;
+        }
+        .main-content {
+            flex: 1;
+            margin-left: 30px;
+        }
+        .section-title {
+            font-weight: 800;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+        .post-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .post-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .post-item .post-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+        .post-item .post-engagement {
+            font-weight: 600;
+            color: #dd2a7b;
+            margin-right: 10px;
+        }
+        .post-item .post-comments {
+            font-weight: 600;
+            color: #515bd4;
+        }
+        .post-item .post-caption {
+            margin-top: 10px;
+            font-size: 0.95rem;
+            line-height: 1.3;
+            white-space: pre-wrap;
+        }
+        .post-item a.view-post {
+            font-weight: 700;
+            color: var(--ig-purple);
+            text-decoration: none;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+        .post-item a.view-post:hover {
+            text-decoration: underline;
+        }
+        .comments-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .comments-section h4 {
+            font-weight: 800;
+            margin-bottom: 15px;
+        }
+        .comment-item {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+        .comment-item:last-child {
+            margin-bottom: 0;
+        }
+        .sentiment-chart {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+        }
+        @media (min-width: 992px) {
+            .container-flex {
+                display: flex;
+                align-items: flex-start;
+                gap: 30px;
+            }
+        }
+        @media (max-width: 991px) {
+            .profile-sidebar {
+                max-width: 100%;
+                margin-bottom: 30px;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand navbar-ig sticky-top px-3 py-2">
+        <div class="brand-badge">
+            <span class="logo-sq round" style="background:none;box-shadow:none">
+                <img src="{{ url_for('static', filename='logo1.jpg') }}" alt="logo" style="width:22px;height:22px;border-radius:8px" />
+            </span>
+            <span class="app-name">Influencer Analyzer</span>
+        </div>
+        <div class="ms-auto d-flex align-items-center gap-3">
+            <span class="theme-toggle" id="themeToggle"><span class="dot"></span><span>Theme</span></span>
+            <a class="link-ig" href="{{ url_for('home') }}">Home</a>
+            <a class="link-ig" href="{{ url_for('creator') }}">Creator</a>
+            <a class="link-ig" href="{{ url_for('brand') }}">Brand</a>
+            {% if session.get('email') %}
+                <a class="link-ig" href="{{ url_for('logout') }}">Logout</a>
+            {% endif %}
+        </div>
+    </nav>
+    <div class="grad-bar"></div>
+
+    <div class="container container-flex mt-4">
+        {% if error %}
+            <div class="error-message text-center">
+                <h3>Profile Loading Error</h3>
+                <p>{{ error }}</p>
+                <a href="{{ url_for('brand') }}" class="btn btn-ig mt-3">Back to Brand Discovery</a>
+            </div>
+        {% else %}
+            <aside class="profile-sidebar">
+                <h2>@{{ profile.username or 'Unknown' }}</h2>
+                <h3>{{ profile.full_name or profile.username or 'Unknown User' }}</h3>
+                {% if profile.bio %}
+                    <p class="bio">{{ profile.bio }}</p>
+                {% endif %}
+                <div class="profile-stats">
+                    <p><strong>Followers:</strong> {{ "{:,}".format(profile.followers or 0) }}</p>
+                    <p><strong>Following:</strong> {{ "{:,}".format(profile.following or 0) }}</p>
+                    <p><strong>Posts:</strong> {{ profile.posts_count or (posts|length if posts else 0) }}</p>
+                    <p><strong>Engagement Rate:</strong> {{ "%.2f"|format(profile.engagement_percent or 0) }}%</p>
+                </div>
+                <div class="d-flex">
+                    <button class="btn-gradient" id="showGrowthBtn" data-username="{{ profile.username }}">Show Growth</button>
+                    <button class="btn-outline" id="exportCsvBtn">Export CSV</button>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <section class="recent-posts-section mb-4">
+                    <h4 class="section-title">Recent Posts</h4>
+                    {% if posts %}
+                    <ul class="post-list">
+                       {% for post in posts %}
+                      <li class="post-item">
+                        <h5 class="fw-bold mb-2">Post {{ loop.index }}</h5>
+                        <div class="post-header">
+                        <span>{{ post.timestamp|timestamp_to_date if post.timestamp else 'Unknown date' }}</span>
+                        <span>
+                          Likes: {{ "{:,}".format(post.likes or 0) }} |
+                         Comments: {{ "{:,}".format(post.commentsCount or 0) }} |
+                         Engagement: {{ "%.2f"|format(post.engagement_percent or 0) }}%
+                        </span>
+                        </div>
+            {% if post.caption %}
+                <p class="post-caption">{{ post.caption }}</p>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>
+
+                    {% else %}
+                        <p>No posts available.</p>
+                    {% endif %}
+                </section>
+
+                {% if comments %}
+                <section class="comments-section">
+                    <h4>Recent Comments</h4>
+                    {% for comment in comments %}
+                        <div class="comment-item">{{ comment }}</div>
+                    {% endfor %}
+                </section>
+                {% endif %}
+
+                {% if sentiment and (sentiment.positive or sentiment.neutral or sentiment.negative) %}
+                <section class="sentiment-section mt-4">
+                    <h4 class="section-title">Comment Sentiment</h4>
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <p>Positive: {{ sentiment.positive or 0 }}%</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p>Negative: {{ sentiment.negative or 0 }}%</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p>Neutral: {{ sentiment.neutral or 0 }}%</p>
+                        </div>
+                    </div>
+                    {% if not comments %}
+                        <p class="no-data">No comments for analysis.</p>
+                    {% else %}
+                        <div class="sentiment-chart">
+                            <canvas id="sentimentChart"></canvas>
+                        </div>
+                    {% endif %}
+                </section>
+                {% endif %}
+
+                <!-- Growth Chart Section (hidden by default) -->
+                <section class="growth-section mt-4" id="growthSection" style="display: none;">
+                    <h4 class="section-title">Growth Trends</h4>
+                    <div class="growth-chart">
+                        <canvas id="growthChart"></canvas>
+                    </div>
+                </section>
+            </main>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Theme toggle
+        const rootEl = document.documentElement;
+        if (localStorage.getItem('theme') === 'dark') {
+            rootEl.setAttribute('data-theme', 'dark');
+        }
+        
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const isDark = rootEl.getAttribute('data-theme') === 'dark';
+            if (isDark) {
+                rootEl.removeAttribute('data-theme');
+                localStorage.removeItem('theme');
+            } else {
+                rootEl.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        // Show Growth button
+        document.getElementById('showGrowthBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('showGrowthBtn');
+            const growthSection = document.getElementById('growthSection');
+            const canvas = document.getElementById('growthChart');
+
+            if (growthSection.style.display === 'none') {
+                btn.textContent = 'Loading...';
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch('/growth', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ username: btn.dataset.username })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch growth data');
+                    }
+
+                    const growthData = await response.json();
+
+                    // Show the section
+                    growthSection.style.display = 'block';
+
+                    // Create chart
+                    const ctx = canvas.getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: growthData.timestamps.map(ts => new Date(ts).toLocaleDateString()),
+                            datasets: [{
+                                label: 'Follower Growth',
+                                data: growthData.follower_growth,
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)'
+                            }, {
+                                label: 'Engagement Trend',
+                                data: growthData.engagement_trend,
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Growth Trends Over Time'
+                                }
+                            }
+                        }
+                    });
+
+                    btn.textContent = 'Hide Growth';
+                } catch (error) {
+                    console.error('Error fetching growth data:', error);
+                    alert('Failed to load growth data. Please try again.');
+                    btn.disabled = false;
+                    btn.textContent = 'Show Growth';
+                }
+            } else {
+                growthSection.style.display = 'none';
+                btn.textContent = 'Show Growth';
+            }
+        });
+
+        // Export CSV button
+        document.getElementById('exportCsvBtn').addEventListener('click', () => {
+            const data = [
+                ['Username', '{{ profile.username or "Unknown" }}'],
+                ['Full Name', '{{ profile.full_name or profile.username or "Unknown User" }}'],
+                ['Followers', '{{ profile.followers or 0 }}'],
+                ['Following', '{{ profile.following or 0 }}'],
+                ['Posts', '{{ profile.posts_count or (posts|length if posts else 0) }}'],
+                ['Engagement Rate', '{{ "%.2f"|format(profile.engagement_percent or 0) }}%']
+            ];
+            let csvContent = "data:text/csv;charset=utf-8,";
+            data.forEach(row => {
+                csvContent += row.join(",") + "\r\n";
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "{{ profile.username or 'profile' }}_data.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // Initialize chart
+        {% if sentiment and (sentiment.positive or sentiment.neutral or sentiment.negative) %}
+            const ctx = document.getElementById('sentimentChart').getContext('2d');
+            const sentimentData = {
+                labels: ['Positive', 'Negative', 'Neutral'],
+                datasets: [{
+                    label: 'Sentiment Distribution',
+                    data: [{{ sentiment.positive or 0 }}, {{ sentiment.negative or 0 }}, {{ sentiment.neutral or 0 }}],
+                    backgroundColor: [
+                        'rgba(92, 184, 92, 0.6)', // Positive - muted green
+                        'rgba(217, 83, 79, 0.6)', // Negative - muted red
+                        'rgba(240, 173, 78, 0.6)' // Neutral - muted yellow
+                    ],
+                    borderColor: [
+                        'rgba(92, 184, 92, 1)',
+                        'rgba(217, 83, 79, 1)',
+                        'rgba(240, 173, 78, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: sentimentData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: 'var(--fg)' }
+                        }
+                    }
+                }
+            });
+        {% endif %}
+    </script>
+</body>
+</html>
